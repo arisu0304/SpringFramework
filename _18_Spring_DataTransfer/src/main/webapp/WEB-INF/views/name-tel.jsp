@@ -16,7 +16,6 @@
             margin-left: 10px;
         }
     </style>
-    <script src="${pageContext.request.contextPath}/js/jquery-3.7.1.min.js"></script>
 </head>
 <body>
     <form action="/name-tel.do" method="post">
@@ -42,16 +41,5 @@
             <p>${aaa.tel}</p>
         </div>
     </c:forEach>
-    <script>
-    $(() => {
-        $("form").on("submit", (e) => {
-            if($("input[name='name']").val() === '') {
-                alert("aaaa");
-                e.preventDefault();
-            }
-        })
-    });
-    </script>
 </body>
-
 </html>

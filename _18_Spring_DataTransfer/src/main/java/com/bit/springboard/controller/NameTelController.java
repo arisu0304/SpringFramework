@@ -123,9 +123,9 @@ public class NameTelController {
         // 해당 요청에 한정되지 않고 다른 페이지들에서도 HttpSession에 담겨있는 데이터를 사용할 수 있다.
         // 주로 로그인한 사용자의 정보를 담아둘 때 사용된다.
 //        session.setAttribute("nameTelList", nameTelService.getNameTelList());
-
+    
         // redirect 기능으로 다른 요청을 호출
-
+        // redirect는 get 방식으로 요청을 보낸다.
         return "redirect:/name-tel.do";
     }
 
