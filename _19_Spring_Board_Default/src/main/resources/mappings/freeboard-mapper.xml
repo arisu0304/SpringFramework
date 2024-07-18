@@ -29,7 +29,7 @@
             WHERE ID = #{id}
     </update>
 
-    <select id="getBoardList" parameterType="int" resultType="board">
+    <select id="getBoardList" parameterType="map" resultType="board">
         SELECT F.ID
              , F.TITLE
              , F.CONTENT
@@ -41,7 +41,24 @@
             FROM FREEBOARD F
             JOIN MEMBER M
               ON F.WRITER_ID = M.ID
-            LIMIT 10 OFFSET #{offset}
+        -- mybatis의 동적 쿼리 사용
+            WHERE 1=1
+        <if test="searchKeyword != null and searchKeyword != ''">
+            <if test="searchCondition == 'all'">
+               AND (F.TITLE LIKE CONCAT('%', #{searchKeyword}, '%')
+               OR F.CONTENT LIKE CONCAT('%', #{searchKeyword}, '%')
+               OR M.NICKNAME LIKE CONCAT('%', #{searchKeyword}, '%'))
+            </if>
+            <if test="searchCondition == 'title'">
+                AND F.TITLE LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+            <if test="searchCondition == 'content'">
+                AND F.CONTENT LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+            <if test="searchCondition == 'writer'">
+                AND M.NICKNAME LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+        </if>
     </select>
 
     <delete id="delete" parameterType="int">
@@ -64,14 +81,27 @@
             WHERE F.ID = #{id}
     </select>
 
-    <select id="getBoardCount" resultType="int">
-        SELECT COUNT(*) FROM FREEBOARD
-    </select>
-
-    <update id="increaseCnt" parameterType="int">
+    <update id="updateCnt" parameterType="int">
         UPDATE FREEBOARD
-        SET CNT = CNT + 1
-        WHERE ID = #{id}
+            SET
+                CNT = CNT + 1
+            WHERE ID = #{id}
     </update>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 </mapper>

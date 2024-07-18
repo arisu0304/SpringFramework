@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Map;
+
 @Controller
 @RequestMapping("/board")
 public class BoardController {
@@ -24,55 +26,58 @@ public class BoardController {
         this.applicationContext = applicationContext;
     }
 
-    @GetMapping("/free-list.do")
-    public String freeListView(@RequestParam(defaultValue = "1") int page, Model model) {
-
-        int limit = 10;
-        int offset = (page - 1) * limit;
-
+    @RequestMapping("/free-list.do")
+    public String freeListView(Model model, @RequestParam Map<String, String> searchMap) {
+//        System.out.println(searchMap);
         boardService = applicationContext.getBean("freeBoardServiceImpl", BoardService.class);
 
-        model.addAttribute("freeBoardList", boardService.getBoardList(offset));
-
-        int totalBoardCount = boardService.getBoardCount();
-        int totalPages = (int) Math.ceil(totalBoardCount / (double) limit);
-
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("freeBoardList", boardService.getBoardList(searchMap));
+        model.addAttribute("searchMap", searchMap);
 
         return "board/free-list";
+    }
+
+    @GetMapping("update-cnt.do")
+    public String updateCnt(BoardDto boardDto) {
+        if(boardDto.getType().equals("free")) {
+            boardService = applicationContext.getBean("freeBoardServiceImpl", BoardService.class);
+        } else {
+            boardService = applicationContext.getBean("noticeServiceImpl", BoardService.class);
+        }
+
+        boardService.updateCnt(boardDto.getId());
+
+        if(boardDto.getType().equals("free")) {
+            return "redirect:/board/free-detail.do?id=" + boardDto.getId();
+        } else {
+            return "redirect:/board/notice-detail.do?id=" + boardDto.getId();
+        }
     }
 
     @GetMapping("/free-detail.do")
     public String freeDetailView(/*HttpServletRequest request*//*@RequestParam("id") int id*/BoardDto boardDto, Model model) {
 //        int id = Integer.valueOf(request.getParameter("id"));
         boardService = applicationContext.getBean("freeBoardServiceImpl", BoardService.class);
-
-        boardService.increaseCnt(boardDto.getId());
-
+//        boardService.updateCnt(boardDto.getId());
         model.addAttribute("freeBoard", boardService.getBoard(boardDto.getId()));
 
         return "board/free-detail";
     }
 
-    @GetMapping("/notice-list.do")
-    public String noticeListView(Model model) {
+    @RequestMapping("/notice-list.do")
+    public String noticeListView(Model model, @RequestParam Map<String, String> searchMap) {
         boardService = applicationContext.getBean("noticeServiceImpl", BoardService.class);
 
-        model.addAttribute("noticeList", boardService.getBoardList());
+        model.addAttribute("noticeList", boardService.getBoardList(searchMap));
+        model.addAttribute("searchMap", searchMap);
 
         return "board/notice-list";
     }
 
     @GetMapping("/notice-detail.do")
-    public String noticeDetailView(@RequestParam int id, Model model) {
-
+    public String noticeDetailView(BoardDto boardDto, Model model) {
         boardService = applicationContext.getBean("noticeServiceImpl", BoardService.class);
-
-        boardService.increaseCnt(id);
-
-        model.addAttribute("notice", boardService.getBoard(id));
-
+        model.addAttribute("notice", boardService.getBoard(boardDto.getId()));
         return "board/notice-detail";
     }
 
@@ -109,26 +114,43 @@ public class BoardController {
     public String modify(BoardDto boardDto) {
         if(boardDto.getType().equals("free")) {
             boardService = applicationContext.getBean("freeBoardServiceImpl", BoardService.class);
-            boardService.modify(boardDto);
-            return "redirect:/board/free-detail.do?id=" + boardDto.getId();
-        }else{
+        } else {
             boardService = applicationContext.getBean("noticeServiceImpl", BoardService.class);
-            boardService.modify(boardDto);
-            return "redirect:/board/notice-detail.do?id=" + boardDto.getId();
         }
+        boardService.modify(boardDto);
+
+        if(boardDto.getType().equals("free"))
+            return "redirect:/board/free-detail.do?id=" + boardDto.getId();
+        else
+            return "redirect:/board/notice-detail.do?id=" + boardDto.getId();
     }
 
-    @GetMapping("/deleteBoard.do")
-    public String deleteBoard(@RequestParam int id, String type){
-        if(type.equals("free")){
+    @GetMapping("/delete.do")
+    public String delete(BoardDto boardDto) {
+        if(boardDto.getType().equals("free")) {
             boardService = applicationContext.getBean("freeBoardServiceImpl", BoardService.class);
-            boardService.delete(id);
-            return "redirect:/board/free-list.do";
-        }else{
+        } else {
             boardService = applicationContext.getBean("noticeServiceImpl", BoardService.class);
-            boardService.delete(id);
-            return "redirect:/board/notice-list.do";
         }
+
+        boardService.delete(boardDto.getId());
+
+//        model.addAttribute("freeBoardList", boardService.getBoardList());
+        if(boardDto.getType().equals("free"))
+            return "redirect:/board/free-list.do";
+        else
+            return "redirect:/board/notice-list.do";
     }
+
+
+
+
+
+
+
+
+
+
+
 
 }
