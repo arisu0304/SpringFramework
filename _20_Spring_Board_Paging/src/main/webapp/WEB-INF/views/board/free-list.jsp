@@ -126,7 +126,14 @@
     <script>
         $(() => {
             $("#search-icon").on("click", (e) => {
-               $("#search-form").submit();
+                $("input[name='pageNum']").val(1);
+                $("#search-form").submit();
+            });
+
+            $("input[name='searchKeyword']").on("keypress", (e) => {
+                if(e.key === 'Enter') {
+                    $("input[name='pageNum']").val(1);
+                }
             });
 
             $(".pagination a").on("click", (e) => {
