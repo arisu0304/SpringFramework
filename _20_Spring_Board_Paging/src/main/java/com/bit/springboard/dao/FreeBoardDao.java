@@ -1,6 +1,7 @@
 package com.bit.springboard.dao;
 
 import com.bit.springboard.dto.BoardDto;
+import com.bit.springboard.dto.BoardFileDto;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -50,10 +51,18 @@ public class FreeBoardDao {
             "                                    ON F.WRITER_ID = M.ID" +
             "                                  WHERE F.ID = ?";
 
-    public void post(BoardDto boardDto) {
+    public void post(BoardDto boardDto, List<BoardFileDto> boardFileDtoList) {
         System.out.println("FreeBoardDao의 post 메소드 실행");
 
         mybatis.insert(/*쿼리문의 호출은 Mapper.xml 파일의 namespace값.쿼리문의 id*/"FreeBoardDao.post", boardDto);
+
+        System.out.println("insert 실행 후 id값: " + boardDto.getId());
+
+        if(boardFileDtoList.size() > 0) {
+            boardFileDtoList.forEach(boardFileDto -> boardFileDto.setBoard_id(boardDto.getId()));
+
+            mybatis.insert("FreeBoardDao.uploadFiles", boardFileDtoList);
+        }
 
         System.out.println("FreeBoardDao의 post 메소드 실행 종료");
     }
@@ -81,6 +90,8 @@ public class FreeBoardDao {
     public void delete(int id) {
         System.out.println("FreeBoardDao의 delete 메소드 실행");
 
+        mybatis.delete("FreeBoardDao.deleteFiles", id);
+
         mybatis.delete("FreeBoardDao.delete", id);
 
         System.out.println("FreeBoardDao의 delete 메소드 실행 종료");
@@ -104,5 +115,9 @@ public class FreeBoardDao {
 
     public int getBoardTotalCnt(Map<String, String> searchMap) {
         return mybatis.selectOne("FreeBoardDao.getBoardTotalCnt", searchMap);
+    }
+
+    public List<BoardFileDto> getFreeBoardFileList(int id) {
+        return mybatis.selectList("FreeBoardDao.getFreeBoardFileList", id);
     }
 }

@@ -5,6 +5,9 @@
 <!--쿼리문이 Dao 클래스에서 분리되어 온 것이기 때문에 namespace는 관례적으로 Dao 클래스명과 일치시킨다.-->
 <mapper namespace="FreeBoardDao">
     <insert id="post" parameterType="board">
+        <selectKey resultType="int" keyProperty="id" order="AFTER">
+            SELECT IFNULL(MAX(ID), 1) FROM FREEBOARD
+        </selectKey>
         INSERT INTO FREEBOARD(
             TITLE,
             CONTENT,
@@ -59,6 +62,7 @@
                 AND M.NICKNAME LIKE CONCAT('%', #{search.searchKeyword}, '%')
             </if>
         </if>
+        ORDER BY F.ID DESC
         LIMIT #{cri.amount} OFFSET #{cri.startNum}
     </select>
 
@@ -115,11 +119,40 @@
             </if>
     </select>
 
+    <insert id="uploadFiles" parameterType="list">
+        INSERT INTO FREEBOARD_FILE (
+            BOARD_ID,
+            FILENAME,
+            FILEORIGINNAME,
+            FILEPATH,
+            FILETYPE
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.board_id},
+                #{item.filename},
+                #{item.fileoriginname},
+                #{item.filepath},
+                #{item.filetype}
+            )
+        </foreach>
+    </insert>
 
+    <select id="getFreeBoardFileList" parameterType="int" resultType="boardFile">
+        SELECT ID
+             , BOARD_ID
+             , FILENAME
+             , FILEORIGINNAME
+             , FILEPATH
+             , FILETYPE
+            FROM FREEBOARD_FILE
+            WHERE BOARD_ID = #{id}
+    </select>
 
-
-
-
+    <delete id="deleteFiles" parameterType="int">
+        DELETE FROM FREEBOARD_FILE
+            WHERE BOARD_ID = #{id}
+    </delete>
 
 
 

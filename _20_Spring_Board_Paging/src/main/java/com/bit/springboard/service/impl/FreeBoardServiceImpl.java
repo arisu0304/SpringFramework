@@ -1,16 +1,21 @@
 package com.bit.springboard.service.impl;
 
+import com.bit.springboard.common.FileUtils;
 import com.bit.springboard.dao.FreeBoardDao;
 import com.bit.springboard.dto.BoardDto;
+import com.bit.springboard.dto.BoardFileDto;
 import com.bit.springboard.dto.Criteria;
 import com.bit.springboard.service.BoardService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class FreeBoardServiceImpl implements BoardService {
@@ -23,17 +28,47 @@ public class FreeBoardServiceImpl implements BoardService {
 
 
     @Override
-    public void post(BoardDto boardDto) {
-//        if(boardDto.getId() == 0) {
-//            throw new RuntimeException("id에 0은 입력될 수 없습니다.");
-//        }
-        freeBoardDao.post(boardDto);
+    public void post(BoardDto boardDto, MultipartFile[] uploadFiles) {
+        List<BoardFileDto> boardFileDtoList = new ArrayList<>();
+
+        if(uploadFiles != null && uploadFiles.length > 0) {
+            // 업로드 폴더 지정
+            String attachPath = "C:/tmp/upload/";
+
+            File directory = new File(attachPath);
+
+            // 업로드 폴더가 존재하지 않으면 폴더 생성
+            if(!directory.exists()) {
+                // 하위폴더도 생성하려면 mkdirs 메소드를 호출한다.
+                directory.mkdirs();
+            }
+
+            Arrays.stream(uploadFiles).forEach(file -> {
+                if(file.getOriginalFilename() != null && !file.getOriginalFilename().equals("")) {
+                    BoardFileDto boardFileDto = FileUtils.parserFileInfo(file, attachPath);
+                    boardFileDtoList.add(boardFileDto);
+                }
+            });
+        }
+
+        freeBoardDao.post(boardDto, boardFileDtoList);
     }
 
     @Override
-    public void modify(BoardDto boardDto) {
+    public void modify(BoardDto boardDto, MultipartFile[] uploadFiles, MultipartFile[] changeFiles, String originFiles) {
+        // JSON String 형태의 originFiles를 List<BoardFileDto> 형태로 변환
+        List<BoardFileDto> originFileList = new ArrayList<>();
+
+        try {
+            originFileList = new ObjectMapper().readValue(originFiles, new TypeReference<List<BoardFileDto>>() {});
+        } catch(IOException ie) {
+            System.out.println(ie.getMessage());
+        }
+        System.out.println(originFiles);
+        System.out.println(originFileList);
+
         boardDto.setModdate(LocalDateTime.now());
-        freeBoardDao.modify(boardDto);
+//        freeBoardDao.modify(boardDto);
     }
 
     @Override
@@ -68,17 +103,10 @@ public class FreeBoardServiceImpl implements BoardService {
         return freeBoardDao.getBoardTotalCnt(searchMap);
     }
 
-
-
-
-
-
-
-
-
-
-
-
+    @Override
+    public List<BoardFileDto> getBoardFileList(int id) {
+        return freeBoardDao.getFreeBoardFileList(id);
+    }
 
 
 }
